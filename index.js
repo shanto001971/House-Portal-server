@@ -52,6 +52,42 @@ async function run() {
             const result = await houseCollection.findOne(query);
             res.send(result);
         });
+        app.get('/authUser/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        });
+
+        app.get('/api/search', async (req, res) => {
+            try {
+                const { name, city, page = 1, pageSize = 10 } = req.query;
+
+
+
+                // Implement your MongoDB query here based on the search parameters
+                // const result = await houseCollection.find({
+                //     name: { $regex: new RegExp(name, 'i') },  // Case-insensitive search for name
+                //     city: { $regex: new RegExp(city, 'i') },  // Case-insensitive search for city
+                // }).toArray();
+
+                let filter = {};
+                if (name) {
+                    filter.name = { $regex: `.*${name}.*`, $options: 'i' };
+                    // Case-insensitive search with any substring of the product title
+                }
+                if (city) {
+                    filter.city = city; // Filter by category
+                }
+                const skip = (page - 1) * pageSize;
+                const results = await houseCollection.find(filter).skip(skip).limit(parseInt(pageSize)).toArray();
+
+                res.send(results);
+            } catch (error) {
+                console.error('Error during search:', error);
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
 
 
 
@@ -64,7 +100,7 @@ async function run() {
                 if (user) {
                     return res.status(400).json({ message: 'Email already in use' });
                 }
-            
+
 
                 const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -104,7 +140,7 @@ async function run() {
                 const { email, password } = req.body;
 
                 const user = await userCollection.findOne({ email: email });
-                
+
 
                 const isPasswordValid = await bcrypt.compare(password, user.password);
                 // console.log(isPasswordValid)
