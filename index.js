@@ -59,29 +59,54 @@ async function run() {
             res.send(result);
         });
 
+        // app.get('/api/search', async (req, res) => {
+        //     try {
+        //         const { name, city, page = 1, pageSize = 10 } = req.query;
+
+
+
+        //         // Implement your MongoDB query here based on the search parameters
+        //         // const result = await houseCollection.find({
+        //         //     name: { $regex: new RegExp(name, 'i') },  // Case-insensitive search for name
+        //         //     city: { $regex: new RegExp(city, 'i') },  // Case-insensitive search for city
+        //         // }).toArray();
+
+        //         let filter = {};
+        //         if (name) {
+        //             filter.name = { $regex: `.*${name}.*`, $options: 'i' };
+        //             // Case-insensitive search with any substring of the product title
+        //         }
+        //         if (city) {
+        //             filter.city = city; // Filter by category
+        //         }
+        //         const skip = (page - 1) * pageSize;
+        //         const results = await houseCollection.find(filter).skip(skip).limit(parseInt(pageSize)).toArray();
+
+        //         res.send(results);
+        //     } catch (error) {
+        //         console.error('Error during search:', error);
+        //         res.status(500).json({ message: 'Internal server error' });
+        //     }
+        // });
+
         app.get('/api/search', async (req, res) => {
             try {
-                const { name, city, page = 1, pageSize = 10 } = req.query;
-
-
-
-                // Implement your MongoDB query here based on the search parameters
-                // const result = await houseCollection.find({
-                //     name: { $regex: new RegExp(name, 'i') },  // Case-insensitive search for name
-                //     city: { $regex: new RegExp(city, 'i') },  // Case-insensitive search for city
-                // }).toArray();
+                const { name, city, bedrooms, bathrooms, roomSize, availability, minRent, maxRent } = req.query;
 
                 let filter = {};
-                if (name) {
-                    filter.name = { $regex: `.*${name}.*`, $options: 'i' };
-                    // Case-insensitive search with any substring of the product title
+                if (name) filter.name = { $regex: `.*${name}.*`, $options: 'i' };
+                if (city) filter.city = city;
+                if (bedrooms) filter.bedrooms = parseInt(bedrooms);
+                if (bathrooms) filter.bathrooms = parseInt(bathrooms);
+                if (roomSize) filter.roomSize = parseInt(roomSize);
+                if (availability) filter.availability = availability === 'true'; // Convert string to boolean
+                if (minRent || maxRent) {
+                    filter.rentPerMonth = {};
+                    if (minRent) filter.rentPerMonth.$gte = parseInt(minRent);
+                    if (maxRent) filter.rentPerMonth.$lte = parseInt(maxRent);
                 }
-                if (city) {
-                    filter.city = city; // Filter by category
-                }
-                const skip = (page - 1) * pageSize;
-                const results = await houseCollection.find(filter).skip(skip).limit(parseInt(pageSize)).toArray();
 
+                const results = await houseCollection.find(filter).toArray();
                 res.send(results);
             } catch (error) {
                 console.error('Error during search:', error);
